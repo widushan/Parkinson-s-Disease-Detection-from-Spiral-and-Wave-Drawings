@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parkinson's Detection from Drawings</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #fff;
+      margin-top: 60px;
+      padding: 2rem 2.5rem;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      color: #2d3a4b;
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
+      letter-spacing: 1px;
+    }
+    label {
+      font-weight: 500;
+      margin-top: 1rem;
+      color: #3a4a5b;
+    }
+    input[type="file"] {
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #bfc9d1;
+      border-radius: 6px;
+      padding: 0.5rem;
+      background: #f7fafd;
+    }
+    button {
+      margin-top: 1.5rem;
+      background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 2.2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
+    }
+    .result {
+      margin-top: 2rem;
+      padding: 1.2rem 1.5rem;
+      border-radius: 12px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      text-align: center;
+      min-width: 220px;
+      display: none;
+    }
+    .healthy {
+      background: #e0ffe0;
+      color: #2e7d32;
+      box-shadow: 0 0 10px #b2f2b2;
+      animation: pop 0.5s;
+    }
+    .parkinson {
+      background: #ffe0e0;
+      color: #c62828;
+      box-shadow: 0 0 10px #f2b2b2;
+      animation: shake 0.5s;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.8); }
+      100% { transform: scale(1); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    @media (max-width: 500px) {
+      .container {
+        padding: 1rem;
+        max-width: 95vw;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Parkinson's Detection<br>from Drawings</h1>
+    <form id="uploadForm">
+      <label for="spiral">Spiral Drawing:</label><br>
+      <input type="file" id="spiral" name="spiral" accept="image/*" required><br>
+      <label for="wave">Wave Drawing:</label><br>
+      <input type="file" id="wave" name="wave" accept="image/*" required><br>
+      <button type="submit">Detect</button>
+    </form>
+    <div id="result" class="result"></div>
+  </div>
+  <script>
+    const form = document.getElementById('uploadForm');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultDiv.style.display = 'none';
+      resultDiv.className = 'result';
+      resultDiv.textContent = '';
+
+      const spiral = document.getElementById('spiral').files[0];
+      const wave = document.getElementById('wave').files[0];
+      if (!spiral || !wave) {
+        alert('Please upload both spiral and wave drawings.');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('spiral', spiral);
+      formData.append('wave', wave);
+
+      try {
+        const response = await fetch('/predict', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (data.result === 'healthy') {
+          resultDiv.textContent = '🟢 Healthy!';
+          resultDiv.classList.add('healthy');
+        } else if (data.result === 'parkinson') {
+          resultDiv.textContent = '🔴 Parkinson Detected!';
+          resultDiv.classList.add('parkinson');
+        } else {
+          resultDiv.textContent = '❓ Unable to determine.';
+        }
+        resultDiv.style.display = 'block';
+      } catch (err) {
+        resultDiv.textContent = 'Error: Could not connect to server.';
+        resultDiv.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html> 
